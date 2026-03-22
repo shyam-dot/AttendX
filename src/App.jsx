@@ -318,10 +318,6 @@ export default function App() {
 
   const activePrefix = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' }[activeYear];
 
-  // ── Dynamic document title ────────────────────────────────────────────────
-  useEffect(() => {
-    document.title = `AttendX — ${activeYear} ${activeClass} · ${selectedDate}`;
-  }, [activeYear, activeClass, selectedDate]);
 
   return (
     <div className="min-h-screen relative z-10 w-full overflow-x-hidden pt-4 main-content-area">
