@@ -1,0 +1,317 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #0f1923;
+  --bg-card: #131f2e;
+  --accent: #00e5ff;
+  --accent-dim: #0097a7;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --border: rgba(0, 229, 255, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1923;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.6);
+}
+
+/* Background grid pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pulsing red row for 3+ ticks */
+@keyframes pulseRedRow {
+  0%, 100% {
+    background-color: rgba(239, 68, 68, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.6), 0 0 20px rgba(239, 68, 68, 0.15);
+  }
+}
+
+.alert-row {
+  animation: pulseRedRow 1.8s ease-in-out infinite;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(19, 31, 46, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 16px;
+}
+
+/* Cyan glow button */
+.btn-primary {
+  background: linear-gradient(135deg, #00e5ff 0%, #0097a7 100%);
+  color: #0d1117;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background: rgba(0, 229, 255, 0.08);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.btn-secondary:hover {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+/* Danger button */
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+}
+
+/* Tick checkbox custom */
+.tick-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(139, 148, 158, 0.3);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.18s ease;
+  margin: auto;
+}
+.tick-btn:hover {
+  border-color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.08);
+}
+.tick-btn.ticked {
+  border-color: #00e5ff;
+  background: rgba(0, 229, 255, 0.15);
+}
+
+/* Input fields */
+.input-field {
+  background: rgba(19, 31, 46, 0.8);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 8px;
+  color: #e6edf3;
+  font-family: 'Sora', sans-serif;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-field:focus {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
+}
+.input-field::placeholder {
+  color: rgba(139, 148, 158, 0.6);
+}
+
+/* Table styles */
+.attendance-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+.attendance-table th {
+  background: rgba(0, 229, 255, 0.06);
+  color: #00e5ff;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.attendance-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  text-align: center;
+  vertical-align: middle;
+}
+.attendance-table tr:hover:not(.alert-row) td {
+  background: rgba(0, 229, 255, 0.04);
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-box {
+  animation: slideUp 0.3s ease;
+  max-width: 480px;
+  width: 90%;
+}
+
+/* Streak badge */
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(239, 68, 68, 0.2));
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fb923c;
+  white-space: nowrap;
+}
+
+/* Stat card glow */
+.stat-card-glow {
+  position: relative;
+  overflow: hidden;
+}
+.stat-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.05), transparent);
+  pointer-events: none;
+}
+
+/* Responsive table wrapper */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+/* Checkin time badge */
+.time-badge-late {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+.time-badge-ontime {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+/* Pulse dot */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+.pulse-dot-red { background: #ef4444; }
+.pulse-dot-green { background: #22c55e; }
+.pulse-dot-orange { background: #f97316; }
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
