@@ -230,9 +230,11 @@ export default function App() {
     const key = `${studentId}_${date}`;
     if (checked) {
       setCheckIns(prev => ({ ...prev, [key]: true }));
+      setStreaks(prev => ({ ...prev, [studentId]: (prev[studentId] || 0) + 1 }));
     } else {
       setCheckIns(prev => { const u = { ...prev }; delete u[key]; return u; });
       setTicks(prev => { if (!prev[key]) return prev; const u = { ...prev }; delete u[key]; return u; });
+      setStreaks(prev => ({ ...prev, [studentId]: Math.max(0, (prev[studentId] || 0) - 1) }));
     }
   }, []);
 
@@ -242,9 +244,11 @@ export default function App() {
     if (allChecked) {
       setCheckIns(prev => { const u = { ...prev }; studentsData.forEach(s => { delete u[`${s.id}_${date}`]; }); return u; });
       setTicks(prev => { const u = { ...prev }; studentsData.forEach(s => { delete u[`${s.id}_${date}`]; }); return u; });
+      setStreaks(prev => { const u = { ...prev }; studentsData.forEach(s => { u[s.id] = Math.max(0, (u[s.id] || 0) - 1); }); return u; });
       showNotif(`☑️ Cleared all for ${date}`);
     } else {
       setCheckIns(prev => { const u = { ...prev }; studentsData.forEach(s => { u[`${s.id}_${date}`] = true; }); return u; });
+      setStreaks(prev => { const u = { ...prev }; studentsData.forEach(s => { if (!checkIns[`${s.id}_${date}`]) u[s.id] = (u[s.id] || 0) + 1; }); return u; });
       showNotif(`✅ Checked in ALL for ${date}`);
     }
   }, [studentsData, checkIns, showNotif]);
@@ -252,18 +256,23 @@ export default function App() {
   /** Toggle arrival-time circle (stamps IST time, determines late if after 08:30 IST) */
   const toggleTick = useCallback((studentId, date) => {
     const key = `${studentId}_${date}`;
-    setTicks(prev => {
-      if (prev[key]) {
-        const u = { ...prev }; delete u[key]; return u;
-      }
+    const tickExists = !!ticks[key];
+    
+    if (tickExists) {
+      setTicks(prev => { const u = { ...prev }; delete u[key]; return u; });
+    } else {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
       const istH = parseInt(now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }), 10);
       const istM = parseInt(now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', minute: '2-digit' }), 10);
       const isLate = istH > 8 || (istH === 8 && istM > 30);
-      return { ...prev, [key]: { time: timeStr, isLate } };
-    });
-  }, []);
+      
+      setTicks(prev => ({ ...prev, [key]: { time: timeStr, isLate } }));
+      if (isLate) {
+        setStreaks(prev => ({ ...prev, [studentId]: 0 }));
+      }
+    }
+  }, [ticks]);
 
   const markAsPaid = useCallback((fineAmount) => {
     if (!paymentModalStudent) return;

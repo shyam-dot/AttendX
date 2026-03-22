@@ -459,7 +459,7 @@ export default function AttendanceTable({
 
                     {/* STREAK */}
                     <td>
-                      {streak >= 1 && lateCount === 0
+                      {streak >= 1
                         ? <span className="streak-badge">🔥 {streak}</span>
                         : <span className="text-gray-700 text-xs font-black">—</span>
                       }

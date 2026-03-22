@@ -1,78 +1,43 @@
-# 📋 AttendX — College Late & Attendance Tracker
+# 📋 AttendX
 
-AttendX is a high-performance, aesthetically pleasing React application designed for college departments to track daily student attendance, late entries, and automated fine collections. It features a dark-navy glassmorphism design with electric cyan accents, built for speed and ease of use in the classroom.
-
----
+AttendX is a modern, high-aesthetic web application designed to track college students' daily attendance seamlessly. Moving away from clunky spreadsheets, AttendX provides an incredibly visual, fast, and feature-rich interface to handle both daily check-ins and late-comer tracking with precision.
 
 ## 🚀 How It Works
 
-1.  **Select Year & Class**: Choose the specific **Year (1st–4th)** at the top. The Department list below it dynamically updates based on the selected year.
-2.  **Mark Attendance**:
-    *   **Manual Ticks**: Click the circular button in a student's row under a date column to add a ✅ tick.
-    *   **Check-In**: Check the box in the `CHECK-IN` column to stamp the current live time in **IST**.
-        *   🟢 **ON TIME**: Before 08:30 AM IST.
-        *   🟠 **LATE**: After 08:30 AM IST.
-    *   **Select All**: Use the master checkbox in the column header to check in all students simultaneously.
-3.  **Automatic Alerts**:
-    *   If a student reaches **3 ticks**, their entire row turns **Pulsing Red**.
-    *   The `ACTION` column will display a dynamic **Pay Fine** button.
-4.  **Fine & QR Logic**:
-    *   Fines are calculated incrementally: **₹25 per set of 3 ticks** (e.g., 3 ticks = ₹25, 6 ticks = ₹50).
-    *   Clicking "Pay Fine" opens a **QR Payment Modal** with a Google Pay QR code. 
-    *   Marking as paid resets the student's ticks to zero and clears the alert status.
-5.  **History & Calendar**:
-    *   By default, only today's date column is visible. 
-    *   Use the **"Show History"** toggle to see all previous attendance dates.
-    *   Open the **Calendar Picker** to add specific historical or future date columns to the tracking table.
-6.  **Stats & Search**:
-    *   The dashboard at the top tracks real-time counts for Present, Late, and Alerted students.
-    *   Use the search bar to find students instantly by **Name** or **Roll Number**.
-7.  **Data Export**: Click **"Export CSV"** to download a full report of the currently selected class attendance.
+- **Single Date Workflows**: By default, the app loads exactly into "Today's" table. Teachers can easily switch between individual past/future days using the intuitive Date Navigator (`← Prev` / `Next →`), which auto-creates upcoming dates intelligently.
+- **Two-Column Tracking per Day**:
+  - **Check-In**: A simple Present/Absent checkbox. Checking this confirms the student attended college.
+  - **Arrival (Late Marker)**: If the student arrived, clicking the arrival circle securely stamps the current IT time (IST time).
+- **Absent Protection**: If a student is marked as absent, their arrival circle remains strictly disabled to prevent invalid logs.
+- **Real-Time Dashboards**: The top Stats Bar summarizes the data of the *currently viewed date*, showing total enrollment metrics, how many are present, how many are exactly on time, and who failed to reach before the bell.
+
+## ⏰ Handling Late Comers & Fines
+
+AttendX automates the penalty process:
+- **8:30 AM Rule**: If the stamped block is after 08:30 AM, the badge violently shifts to an orange 🟠 `LATE` marker.
+- **Dynamic Fines**: Upon accumulating **3 Late Marks**, a student triggers an Alert threshold. Every 3 late marks equal a **₹50 Fine**. 
+- **QR Payment Integrated Modal**: By clicking the alert badge next to the student's name, the teacher can retrieve a dynamic UPI QR Code scanning for the exact fine amount. Marking it as paid resets their individual late tracks.
+
+## 🔥 Manual Streaks
+
+To encourage punctuality, AttendX utilizes a **streak tracking engine** handled entirely by manual tracking:
+- When a student is checked in (`Present`), their streak increases automatically by `+1`.
+- If the student is ever marked `Late`, the system immediately detects this interaction and resets their ongoing streak permanently string to `0`. 
+- Streaks are rewarded visually on the UI next to their late flags.
+
+## 📖 History & Exporting
+
+- **Student-First History Page**: The app includes a gorgeous History toggle that converts the table into a fully searchable timeline by student. It renders precise filters (`Present`, `Absent`, `Late`, `On Time`) alongside colored pill-badges displaying the history.
+- **CSV Output**: One-click data export pushes exactly formatted data (Name, Date, Arrival Time, Flags) straight to an actionable `.csv` spreadsheet.
+
+## 🔭 Future Scope
+
+While currently completely client-side utilizing React, Vite, and seamless `localStorage` retention, future paths include:
+- **Full Backend Integration**: Implementing PostgreSQL/Node.js to securely sync records centrally.
+- **Automated SMS Pipeline**: Connecting Twilio/AWS SNS to instantly message parents when a student is marked Absent or hits the Late threshold.
+- **Advanced Admin Analytics**: Introducing line charts and graphical reporting structures to observe trends department-wide over semesters.
+- **Biometric Integration**: Tying the Arrival check directly to college server ID tap machines.
 
 ---
 
-## 🛠️ Technologies Used
-
-*   **⚡ Vite + React**: Blazing-fast frontend foundation.
-*   **🎨 Tailwind CSS**: Modern styling with custom glassmorphism and animations.
-*   **💾 LocalStorage**: All data (ticks, dates, check-ins) is persisted locally in the browser, scoped per year and department.
-*   **📁 JSON Driven**: Student records are loaded dynamically from department-specific JSON files in `src/data/`.
-*   **📅 Custom Logic**: Hand-coded Calendar Picker and IST Time stamping engine.
-
----
-
-## 🏁 How to Start the Project
-
-1.  **Clone the Repository**:
-    ```bash
-    git clone [your-repo-link]
-    cd attendx-app
-    ```
-2.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
-3.  **Launch the Dashboard**:
-    ```bash
-    npm run dev
-    ```
-4.  **Access Localhost**: Open `http://localhost:5173` in your browser.
-
----
-
-## ⏹️ How to End the Project
-
-1.  **Stop the Server**: In your terminal/command prompt, press `Ctrl + C` (Windows/Linux) or `Cmd + .` (Mac) and type `y` to terminate the process.
-2.  **Clear Local Data (Optional)**: If you wish to reset everything for a fresh start, clear your browser's site data/local storage via F12 Developer Tools.
-3.  **Close Files**: Simply exit your IDE (VS Code, etc.) and close the browser tab.
-
----
-
-## 📂 Project Structure
-
-*   `src/data/`: Contains all student datasets (34 JSON files).
-*   `src/components/`: Modular UI elements (Header, AttendanceTable, Modals, etc.).
-*   `public/assets/`: Static assets like the Google Pay QR image.
-*   `src/App.jsx`: The central state management engine.
-
-AttendX — Built for precision. Built for departments. 🏛️
+> Built with React, Vite, and Tailwind CSS.
