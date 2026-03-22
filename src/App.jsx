@@ -313,7 +313,12 @@ export default function App() {
   const totalStudents  = studentsData.length;
   const presentToday   = studentsData.filter(s => !!checkIns[`${s.id}_${selectedDate}`]).length;
   const lateToday      = studentsData.filter(s => { const t = ticks[`${s.id}_${selectedDate}`]; return t && t.isLate; }).length;
-  const onTimeToday    = studentsData.filter(s => { const t = ticks[`${s.id}_${selectedDate}`]; return !!checkIns[`${s.id}_${selectedDate}`] && t && !t.isLate; }).length;
+  const onTimeToday    = studentsData.filter(s => { 
+    const isPresent = !!checkIns[`${s.id}_${selectedDate}`];
+    const t = ticks[`${s.id}_${selectedDate}`]; 
+    const isLate = t && t.isLate;
+    return isPresent && !isLate; 
+  }).length;
   const alertCount     = studentsData.filter(s => getLateCount(s.id) >= LATE_ALERT_THRESHOLD).length;
 
   const activePrefix = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' }[activeYear];

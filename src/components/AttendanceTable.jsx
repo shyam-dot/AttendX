@@ -116,7 +116,7 @@ export default function AttendanceTable({
               const tick       = ticks[`${student.id}_${d}`];
               const hasArrival = !!tick;
               const isLate     = hasArrival && tick.isLate;
-              const isOnTime   = isPresent && hasArrival && !tick.isLate;
+              const isOnTime   = isPresent && !isLate;
               return { date: d, isPresent, tick, hasArrival, isLate, isOnTime };
             });
 
@@ -140,7 +140,7 @@ export default function AttendanceTable({
               const tick       = ticks[`${student.id}_${d}`];
               const hasArrival = !!tick;
               const isLate     = hasArrival && tick.isLate;
-              const isOnTime   = isPresent && hasArrival && !tick.isLate;
+              const isOnTime   = isPresent && !isLate;
               return { date: d, isPresent, tick, hasArrival, isLate, isOnTime };
             });
 
