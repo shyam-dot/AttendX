@@ -166,32 +166,41 @@ body::before {
 }
 
 /* ============================================================
-   TICK BUTTON — min 44×44px touch target
+   ARRIVAL CIRCLE BUTTON — min 44×44px touch target
+   Empty = no time marked | Green = ON TIME | Orange = LATE
    ============================================================ */
-.tick-btn {
-  width: 44px;
-  height: 44px;
+.arrival-circle-btn {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 2px solid rgba(139, 148, 158, 0.3);
+  border: 2px dashed rgba(139, 148, 158, 0.2);
   background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
   transition: all 0.18s ease;
   margin: auto;
-  /* touch target */
   touch-action: manipulation;
 }
-.tick-btn:hover {
-  border-color: rgba(0, 229, 255, 0.5);
-  background: rgba(0, 229, 255, 0.08);
+.arrival-circle-btn:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  border-style: solid;
+  background: rgba(0, 229, 255, 0.05);
 }
-.tick-btn.ticked {
-  border-color: #ff4444;
-  background: rgba(239, 68, 68, 0.12);
+.arrival-circle-btn.arrival-ontime {
+  border-color: #4ade80;
+  border-style: solid;
+  background: rgba(74, 222, 128, 0.15);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.25);
 }
+.arrival-circle-btn.arrival-late {
+  border-color: #fb923c;
+  border-style: solid;
+  background: rgba(251, 146, 60, 0.18);
+  box-shadow: 0 0 10px rgba(251, 146, 60, 0.3);
+}
+
 
 /* ============================================================
    INPUT FIELDS
@@ -328,6 +337,65 @@ body::before {
   scroll-snap-align: start;
   min-width: 90px;
 }
+
+/* ── Paired date-group header ─────────────────────────────── */
+.date-group-header {
+  background: var(--frozen-col-head-bg);
+  border-bottom: 2px solid rgba(0, 229, 255, 0.1);
+  border-left: 1px solid rgba(255,255,255,0.06);
+  text-align: center;
+  padding: 6px 8px;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.date-group-header.today-group {
+  background: rgba(0, 229, 255, 0.06);
+  border-bottom-color: rgba(0, 229, 255, 0.3);
+}
+
+/* ── Sub-column headers for CHECK-IN / ARRIVAL ─────────────── */
+.date-sub-th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--frozen-col-head-bg);
+  padding: 6px 4px;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+  white-space: nowrap;
+}
+.date-sub-th.check-in-sub {
+  min-width: 72px;
+  border-right: none;
+}
+.date-sub-th.arrival-sub {
+  min-width: 72px;
+  border-left: 1px solid rgba(255,255,255,0.05);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ── Sub-column cells ───────────────────────────────────────── */
+.date-sub-td {
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  text-align: center;
+  vertical-align: middle;
+}
+.date-sub-td.check-in-sub { min-width: 72px; }
+.date-sub-td.arrival-sub  { min-width: 72px; border-left: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.06); }
+
+/* ── Arrival disabled ───────────────────────────────────────── */
+.arrival-circle-btn.arrival-disabled {
+  border-color: rgba(100, 100, 100, 0.12) !important;
+  border-style: solid !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.25 !important;
+}
+
 
 .attendance-table tr:hover:not(.alert-row) td {
   background: rgba(0, 229, 255, 0.04);

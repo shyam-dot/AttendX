@@ -32,14 +32,6 @@ export default function Header({
             <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-cyan-400 font-sora drop-shadow-md leading-none">
               AttendX
             </h1>
-            {/* Subtitle hidden on very small screens */}
-            <p className="hidden sm:block text-[10px] text-gray-400 font-bold tracking-[0.18em] uppercase mt-0.5">
-              {activeYear} — {activeClass} — Attendance Tracker
-            </p>
-            {/* Compact subtitle on mobile */}
-            <p className="block sm:hidden text-[10px] text-cyan-600 font-bold tracking-wider uppercase mt-0.5">
-              {activeYear} · {activeClass}
-            </p>
           </div>
         </div>
 
