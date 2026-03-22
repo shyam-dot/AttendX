@@ -12,28 +12,33 @@ const DEPTS_Y3_Y4 = ['CSE', 'MECH', 'CIVIL', 'AIDS', 'IT', 'EEE'];
 
 /** Returns today's date string in IST — "22 Mar 26" */
 function getTodayIST() {
-  return new Date().toLocaleDateString('en-GB', {
-    timeZone: 'Asia/Kolkata',
-    day: '2-digit',
-    month: 'short',
-    year: '2-digit',
-  });
+  const d = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+  const map = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = map[d.getMonth()];
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd} ${mm} ${yy}`;
 }
 
 /**
  * Given a date string like "22 Mar 26", returns the next calendar day
- * in the same format — "23 Mar 26".
+ * in the exact same manual format — "23 Mar 26".
  */
 function getNextDay(dateStr) {
-  // Parse "22 Mar 26" → full year 2026
   const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
   const parts  = dateStr.trim().split(' ');
   const day    = parseInt(parts[0], 10);
-  const month  = monthMap[parts[1]];
+  const month  = monthMap[parts[1]] || 0;
   const year   = 2000 + parseInt(parts[2], 10);
-  const d      = new Date(year, month, day);
+  
+  const d = new Date(year, month, day);
   d.setDate(d.getDate() + 1);
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+  
+  const map2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const nextDd = String(d.getDate()).padStart(2, '0');
+  const nextMm = map2[d.getMonth()];
+  const nextYy = String(d.getFullYear()).slice(-2);
+  return `${nextDd} ${nextMm} ${nextYy}`;
 }
 
 export default function App() {
