@@ -10,35 +10,37 @@ const TICK_ALERT_THRESHOLD = 3;
 const DEPTS_Y1_Y2 = ['CSE-A', 'CSE-B', 'ECE-A', 'ECE-B', 'MECH', 'CIVIL', 'IT-A', 'IT-B', 'AIDS-A', 'AIDS-B', 'EEE'];
 const DEPTS_Y3_Y4 = ['CSE', 'MECH', 'CIVIL', 'AIDS', 'IT', 'EEE'];
 
-// Helper: Get today's date formatted
-function getTodayStr() {
+/** Returns today's date string in IST formatted as "DD Mon YY" e.g. "22 Mar 26" */
+function getTodayIST() {
   const now = new Date();
-  return now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+  return now.toLocaleDateString('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: '2-digit',
+  });
 }
 
 export default function App() {
   const [activeYear, setActiveYear] = useState('2nd Year');
   const [activeClass, setActiveClass] = useState('CSE-B');
-  
+
   const [studentsData, setStudentsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Per-class State arrays
   const [dates, setDates] = useState([]);
   const [ticks, setTicks] = useState({});
   const [checkIns, setCheckIns] = useState({});
   const [streaks, setStreaks] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // New features state
+
   const [showHistory, setShowHistory] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  
-  // Modal & Notification
+
   const [paymentModalStudent, setPaymentModalStudent] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  // Auto-switch department when year changes
+  // ── Auto-switch department when year changes ──────────────────────────────
   useEffect(() => {
     const list = (activeYear === '1st Year' || activeYear === '2nd Year') ? DEPTS_Y1_Y2 : DEPTS_Y3_Y4;
     if (!list.includes(activeClass)) {
@@ -46,29 +48,28 @@ export default function App() {
     }
   }, [activeYear, activeClass]);
 
-  // --- 1. Load Data for Active Class ---
+  // ── Load Data for Active Class ────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
     const prefixMap = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' };
     const prefix = prefixMap[activeYear];
-    
-    // Ensure the combination is valid (avoids loading wrong files during auto-switch)
+
     const list = (activeYear === '1st Year' || activeYear === '2nd Year') ? DEPTS_Y1_Y2 : DEPTS_Y3_Y4;
     if (!list.includes(activeClass)) return;
 
     const loadClassData = async () => {
       setLoading(true);
-      const todayStr = getTodayStr();
+      const todayStr = getTodayIST();
       try {
         const rawJson = await import(`./data/students_${prefix}_${activeClass}.json`);
         const jsonStudents = rawJson.default || rawJson;
-        
+
         if (!isMounted) return;
         setStudentsData(jsonStudents);
 
         const storageKey = `attendx_${prefix}_${activeClass}_attendance`;
         const saved = localStorage.getItem(storageKey);
-        
+
         let loadedDates = [todayStr];
         let loadedTicks = {};
         let loadedCheckIns = {};
@@ -81,45 +82,46 @@ export default function App() {
           loadedCheckIns = parsed.checkIns || {};
           loadedStreaks = parsed.streaks || {};
         } else {
-          jsonStudents.forEach(s => loadedStreaks[s.id] = 0);
+          jsonStudents.forEach(s => { loadedStreaks[s.id] = 0; });
         }
 
-        if (!loadedDates.includes(todayStr)) loadedDates.push(todayStr);
+        // Always ensure today is in the dates list
+        if (!loadedDates.includes(todayStr)) {
+          loadedDates = [...loadedDates, todayStr];
+        }
 
         setDates(loadedDates);
         setTicks(loadedTicks);
         setCheckIns(loadedCheckIns);
         setStreaks(loadedStreaks);
-
       } catch (err) {
-        console.error("Error loading JSON:", err);
+        console.error('Error loading JSON:', err);
         if (isMounted) setStudentsData([]);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
-    
+
     loadClassData();
     return () => { isMounted = false; };
   }, [activeYear, activeClass]);
 
-  // --- 2. Persist Data for Active Class ---
+  // ── Persist Data ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (loading) return; 
+    if (loading) return;
     const prefixMap = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' };
     const prefix = prefixMap[activeYear];
     const storageKey = `attendx_${prefix}_${activeClass}_attendance`;
-    
-    localStorage.setItem(storageKey, JSON.stringify({
-      dates, ticks, checkIns, streaks
-    }));
+    localStorage.setItem(storageKey, JSON.stringify({ dates, ticks, checkIns, streaks }));
   }, [activeYear, activeClass, dates, ticks, checkIns, streaks, loading]);
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const showNotif = useCallback((msg, type = 'success') => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 4000);
   }, []);
 
+  /** Always counts across ALL dates regardless of showHistory */
   const getTickCount = useCallback((studentId) => {
     return dates.reduce((sum, date) => sum + (ticks[`${studentId}_${date}`] ? 1 : 0), 0);
   }, [ticks, dates]);
@@ -141,34 +143,27 @@ export default function App() {
 
   const toggleTick = useCallback((studentId, date) => {
     const key = `${studentId}_${date}`;
-    const student = studentsData.find(s => s.id === studentId);
-    
     setTicks(prev => {
       const isTickAdded = !prev[key];
       const updated = { ...prev, [key]: isTickAdded };
-      
       if (isTickAdded) {
-        setStreaks(sPrev => ({ ...sPrev, [studentId]: 0 }));
+        setStreaks(sp => ({ ...sp, [studentId]: 0 }));
       }
       return updated;
     });
-  }, [dates, studentsData]);
+  }, []);
 
-  // Handle single check-in
   const handleCheckIn = useCallback((studentId, checked) => {
     if (checked) {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
-      const istHourStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false });
-      const istMinStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', minute: '2-digit' });
-      const istHour = parseInt(istHourStr, 10);
-      const istMin = parseInt(istMinStr, 10);
-      
-      const isLate = istHour > 8 || (istHour === 8 && istMin > 30);
-      const today = getTodayStr();
+      const istHour = parseInt(now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }), 10);
+      const istMin  = parseInt(now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', minute: '2-digit' }), 10);
+      const isLate  = istHour > 8 || (istHour === 8 && istMin > 30);
+      const today   = getTodayIST();
 
       setCheckIns(prev => ({ ...prev, [studentId]: { time: timeStr, isLate, date: today } }));
-      
+
       if (!isLate && getTickCount(studentId) === 0) {
         setStreaks(prev => ({ ...prev, [studentId]: (prev[studentId] || 0) + 1 }));
       }
@@ -181,29 +176,23 @@ export default function App() {
     }
   }, [getTickCount]);
 
-  // Handle Select All Check-in
   const handleCheckInAll = useCallback(() => {
     const allChecked = studentsData.every(s => checkIns[s.id]);
-    
+
     if (allChecked) {
-      // Uncheck all
       setCheckIns({});
+      showNotif('☑️ All check-ins cleared');
     } else {
-      // Check in all current students
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
-      const istHourStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false });
-      const istMinStr = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', minute: '2-digit' });
-      const istHour = parseInt(istHourStr, 10);
-      const istMin = parseInt(istMinStr, 10);
-      
-      const isLate = istHour > 8 || (istHour === 8 && istMin > 30);
-      const today = getTodayStr();
+      const istHour = parseInt(now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }), 10);
+      const istMin  = parseInt(now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', minute: '2-digit' }), 10);
+      const isLate  = istHour > 8 || (istHour === 8 && istMin > 30);
+      const today   = getTodayIST();
 
+      const newStreaks = { ...streaks };
       setCheckIns(prev => {
         const updated = { ...prev };
-        const newStreaks = { ...streaks };
-        
         studentsData.forEach(s => {
           if (!updated[s.id]) {
             updated[s.id] = { time: timeStr, isLate, date: today };
@@ -212,26 +201,21 @@ export default function App() {
             }
           }
         });
-        
         setStreaks(newStreaks);
         return updated;
       });
-      showNotif('✅ Checked in ALL students successfully!');
+      showNotif('✅ Checked in ALL students!');
     }
   }, [studentsData, checkIns, streaks, getTickCount, showNotif]);
 
   const markAsPaid = useCallback((fineAmount) => {
     if (!paymentModalStudent) return;
     const studentId = paymentModalStudent.id;
-    
     setTicks(prev => {
       const updated = { ...prev };
-      dates.forEach(d => {
-        delete updated[`${studentId}_${d}`];
-      });
+      dates.forEach(d => { delete updated[`${studentId}_${d}`]; });
       return updated;
     });
-    
     setStreaks(prev => ({ ...prev, [studentId]: 0 }));
     showNotif(`₹${fineAmount} fine marked as paid for ${paymentModalStudent.name}. Ticks reset!`);
     setPaymentModalStudent(null);
@@ -244,11 +228,7 @@ export default function App() {
       const checkIn = checkIns[s.id];
       const tickCount = getTickCount(s.id);
       return [
-        idx + 1,
-        s.roll,
-        s.name,
-        s.dept,
-        tickCount,
+        idx + 1, s.roll, s.name, s.dept, tickCount,
         ...dates.map(d => ticks[`${s.id}_${d}`] ? '✓' : ''),
         checkIn ? checkIn.time : '',
         checkIn ? (checkIn.isLate ? 'LATE' : 'ON TIME') : '',
@@ -260,36 +240,35 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    
     const prefixMap = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' };
-    const prefix = prefixMap[activeYear];
-    a.download = `AttendX_${prefix}_${activeClass}_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.csv`;
+    a.download = `AttendX_${prefixMap[activeYear]}_${activeClass}_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showNotif('📊 CSV exported successfully!');
   }, [studentsData, dates, ticks, checkIns, streaks, getTickCount, activeYear, activeClass, showNotif]);
 
+  // ── Derived State ────────────────────────────────────────────────────────
   const filteredStudents = useMemo(() => {
     if (!searchQuery.trim()) return studentsData;
-    const lowerQ = searchQuery.toLowerCase();
-    return studentsData.filter(s => 
-      s.name.toLowerCase().includes(lowerQ) || 
-      s.roll.toLowerCase().includes(lowerQ)
-    );
+    const lq = searchQuery.toLowerCase();
+    return studentsData.filter(s => s.name.toLowerCase().includes(lq) || s.roll.toLowerCase().includes(lq));
   }, [studentsData, searchQuery]);
 
-  const todayStr = getTodayStr();
+  const todayStr     = getTodayIST();
   const totalStudents = studentsData.length;
-  const presentToday = Object.values(checkIns).filter(c => c && c.date === todayStr).length;
-  const lateToday = Object.entries(checkIns).filter(([_, c]) => c && c.date === todayStr && c.isLate).length;
-  const onTimeToday = Object.entries(checkIns).filter(([_, c]) => c && c.date === todayStr && !c.isLate).length;
-  const alertCount = studentsData.filter(s => getTickCount(s.id) >= TICK_ALERT_THRESHOLD).length;
-  const allCheckedIn = studentsData.length > 0 && studentsData.every(s => checkIns[s.id]);
+  const presentToday  = Object.values(checkIns).filter(c => c && c.date === todayStr).length;
+  const lateToday     = Object.entries(checkIns).filter(([, c]) => c && c.date === todayStr && c.isLate).length;
+  const onTimeToday   = Object.entries(checkIns).filter(([, c]) => c && c.date === todayStr && !c.isLate).length;
+  const alertCount    = studentsData.filter(s => getTickCount(s.id) >= TICK_ALERT_THRESHOLD).length;
+  const allCheckedIn  = studentsData.length > 0 && studentsData.every(s => checkIns[s.id]);
+
+  const prefixMap = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' };
+  const activePrefix = prefixMap[activeYear];
 
   return (
-    <div className="min-h-screen relative z-10 w-full overflow-x-hidden pt-4 pb-12">
-      <div className="max-w-[1600px] mx-auto px-4 space-y-8">
-        
+    <div className="min-h-screen relative z-10 w-full overflow-x-hidden pt-4 main-content-area">
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-4 space-y-5 sm:space-y-7 pb-6">
+
         <Header
           activeYear={activeYear}
           setActiveYear={setActiveYear}
@@ -315,52 +294,59 @@ export default function App() {
             />
 
             {studentsData.length === 0 ? (
-              <div className="glass-card flex flex-col items-center justify-center p-20 text-center border-dashed border-gray-700/50 rounded-3xl mt-8">
-                <span className="text-6xl mb-6 opacity-30">📂</span>
-                <h3 className="text-2xl font-black text-gray-400 font-sora mb-3">No students added yet</h3>
-                <p className="text-gray-500 font-semibold text-lg">
-                  Edit <code className="text-cyan-400 bg-cyan-900/20 px-3 py-1.5 rounded-lg border border-cyan-500/20 shadow-inner">src/data/students_{activeYear === '1st Year' ? 'Y1' : activeYear === '2nd Year' ? 'Y2' : activeYear === '3rd Year' ? 'Y3' : 'Y4'}_{activeClass}.json</code> to add students.
+              <div className="glass-card flex flex-col items-center justify-center p-12 sm:p-20 text-center border-dashed border-gray-700/50 rounded-3xl mt-4">
+                <span className="text-5xl sm:text-6xl mb-5 opacity-30">📂</span>
+                <h3 className="text-xl sm:text-2xl font-black text-gray-400 mb-3">No students added yet</h3>
+                <p className="text-gray-500 font-semibold text-sm sm:text-base leading-relaxed">
+                  Edit{' '}
+                  <code className="text-cyan-400 bg-cyan-900/20 px-2 py-1 rounded-lg border border-cyan-500/20 text-xs sm:text-sm break-all">
+                    src/data/students_{activePrefix}_{activeClass}.json
+                  </code>
+                  {' '}to add students.
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Date Selection & History Toggle */}
-                <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-900/40 p-5 rounded-2xl border border-gray-800 shadow-[0_4px_30px_rgba(0,0,0,0.3)] mt-8">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        readOnly
-                        placeholder="Select a date column..."
-                        className="input-field px-4 py-3 w-64 text-sm font-bold tracking-wide border-gray-700 cursor-pointer hover:border-cyan-500/50 bg-gray-900 focus:bg-gray-800 transition-colors shadow-inner"
-                        onClick={() => setIsCalendarOpen(true)}
-                        value=""
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-900/40 p-4 rounded-2xl border border-gray-800 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                  {/* Calendar Picker trigger */}
+                  <div className="relative">
+                    <button
+                      id="calendar-trigger-btn"
+                      className="input-field px-4 py-2.5 flex items-center gap-3 text-sm font-bold text-gray-400 hover:text-cyan-300 hover:border-cyan-500/50 transition-colors cursor-pointer min-w-[200px]"
+                      onClick={() => setIsCalendarOpen(v => !v)}
+                    >
+                      <svg className="w-4 h-4 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Add Date Column
+                      <span className="ml-auto text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded font-mono">
+                        {dates.length} dates
+                      </span>
+                    </button>
+                    {isCalendarOpen && (
+                      <CalendarPicker
+                        onSelectDate={addDate}
+                        addedDates={dates}
+                        onClose={() => setIsCalendarOpen(false)}
                       />
-                      <svg className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-cyan-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                      {isCalendarOpen && (
-                        <CalendarPicker 
-                          onSelectDate={addDate} 
-                          addedDates={dates} 
-                          onClose={() => setIsCalendarOpen(false)} 
-                        />
-                      )}
-                    </div>
+                    )}
                   </div>
-                  
+
                   {/* Show History Toggle */}
                   <div className="flex items-center gap-3 bg-gray-900/80 px-4 py-2.5 rounded-xl border border-gray-800 shadow-inner">
-                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Show History
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
+                      <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      History
                     </span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer" 
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
                         checked={showHistory}
-                        onChange={() => setShowHistory(!showHistory)}
+                        onChange={() => setShowHistory(v => !v)}
                       />
-                      <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"></div>
                     </label>
                   </div>
                 </div>
@@ -387,8 +373,9 @@ export default function App() {
         )}
       </div>
 
+      {/* ── QR Payment Modal ────────────────────────────────────────────────── */}
       {paymentModalStudent && (
-        <QRPaymentModal 
+        <QRPaymentModal
           student={paymentModalStudent}
           tickCount={getTickCount(paymentModalStudent.id)}
           flaggedDates={dates.filter(d => ticks[`${paymentModalStudent.id}_${d}`])}
@@ -397,14 +384,33 @@ export default function App() {
         />
       )}
 
+      {/* ── Toast Notification ───────────────────────────────────────────── */}
       {notification && (
-        <div className={`fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl text-sm font-black tracking-wide flex items-center gap-4 animate-slideUp shadow-[0_10px_40px_rgba(0,0,0,0.5)] border ${
-          notification.type === 'error' ? 'border-red-500/50 text-red-50 shadow-red-500/20 bg-red-600/90 backdrop-blur-md' : 'border-cyan-400 text-cyan-50 shadow-cyan-500/20 bg-cyan-600/90 backdrop-blur-md'
-        }`} style={{ minWidth: 300 }}>
-          <span className={`pulse-dot shrink-0 shadow-sm ${notification.type === 'error' ? 'bg-red-200' : 'bg-cyan-200'}`} />
+        <div
+          className={`fixed bottom-24 sm:bottom-8 right-4 sm:right-8 z-50 px-5 py-3.5 rounded-xl text-sm font-black tracking-wide flex items-center gap-3 animate-slideUp shadow-[0_10px_40px_rgba(0,0,0,0.5)] border max-w-xs sm:max-w-sm ${
+            notification.type === 'error'
+              ? 'border-red-500/50 text-red-50 bg-red-600/90 backdrop-blur-md'
+              : 'border-cyan-400/60 text-cyan-50 bg-cyan-600/90 backdrop-blur-md'
+          }`}
+        >
+          <span className={`pulse-dot ${notification.type === 'error' ? 'bg-red-200' : 'bg-cyan-200'}`} />
           {notification.msg}
         </div>
       )}
+
+      {/* ── Mobile Bottom Action Bar ─────────────────────────────────────── */}
+      <div className="mobile-action-bar">
+        <button
+          onClick={exportCSV}
+          className="flex-1 btn-secondary py-2.5 text-sm font-bold flex items-center justify-center gap-2 rounded-xl"
+          style={{ touchAction: 'manipulation' }}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          </svg>
+          Export CSV
+        </button>
+      </div>
     </div>
   );
 }
