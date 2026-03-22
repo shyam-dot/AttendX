@@ -174,20 +174,20 @@ export default function App() {
   }, [dates, showNotif]);
 
   const removeDate = useCallback((date) => {
-    setDates(prev => {
-      const next = prev.filter(d => d !== date);
-      // If we removed the currently selected date, switch to today or first available
-      setSelectedDate(cur => {
-        if (cur !== date) return cur;
-        const today = getTodayIST();
-        return next.includes(today) ? today : (next[0] || today);
-      });
-      return next;
+    // Determine the new selected date before removing
+    const today = getTodayIST();
+    setDates(prev => prev.filter(d => d !== date));
+    setSelectedDate(cur => {
+      if (cur !== date) return cur;
+      // The removed date was selected — fallback to today or first remaining
+      // We look at the current dates array minus the removed one
+      const remaining = dates.filter(d => d !== date);
+      return remaining.includes(today) ? today : (remaining[0] || today);
     });
     const suffix = `_${date}`;
     setCheckIns(prev => { const u = { ...prev }; Object.keys(u).forEach(k => { if (k.endsWith(suffix)) delete u[k]; }); return u; });
     setTicks(prev => { const u = { ...prev }; Object.keys(u).forEach(k => { if (k.endsWith(suffix)) delete u[k]; }); return u; });
-  }, []);
+  }, [dates]);
 
   /** Navigate to previous date (disabled at first) */
   const navPrev = useCallback(() => {
@@ -200,25 +200,25 @@ export default function App() {
 
   /**
    * Navigate to next date.
-   * If already at the last date, auto-creates the next calendar day
-   * and jumps to it — so Next → is never a dead end.
+   * If already at the last date, auto-creates the next calendar day.
+   * NOTE: All state calls MUST be at the top level — never inside another
+   * state updater callback (React ignores side-effects inside updaters).
    */
   const goNext = useCallback(() => {
-    setSelectedDate(cur => {
-      const idx = dates.indexOf(cur);
-      // Not at the end — just move forward
-      if (idx >= 0 && idx < dates.length - 1) {
-        return dates[idx + 1];
-      }
-      // At the end (or not found) — create next calendar day
-      const next = getNextDay(cur);
+    const idx = dates.indexOf(selectedDate);
+    if (idx >= 0 && idx < dates.length - 1) {
+      // Just move forward to the existing next date
+      setSelectedDate(dates[idx + 1]);
+    } else {
+      // At the end — auto-create the next calendar day
+      const next = getNextDay(selectedDate);
       if (!dates.includes(next)) {
         setDates(prev => [...prev, next]);
         showNotif(`✅ Added ${next}`);
       }
-      return next;
-    });
-  }, [dates, showNotif]);
+      setSelectedDate(next);
+    }
+  }, [dates, selectedDate, showNotif]);
 
   /** Check-in per student per date. Absent → auto-clears tick. */
   const handleCheckIn = useCallback((studentId, date, checked) => {
@@ -304,14 +304,19 @@ export default function App() {
 
   const todayStr = getTodayIST();
 
-  // Stats always from today's data
-  const totalStudents = studentsData.length;
-  const presentToday  = studentsData.filter(s => !!checkIns[`${s.id}_${todayStr}`]).length;
-  const lateToday     = studentsData.filter(s => { const t = ticks[`${s.id}_${todayStr}`]; return t && t.isLate; }).length;
-  const onTimeToday   = studentsData.filter(s => { const t = ticks[`${s.id}_${todayStr}`]; return !!checkIns[`${s.id}_${todayStr}`] && t && !t.isLate; }).length;
-  const alertCount    = studentsData.filter(s => getLateCount(s.id) >= LATE_ALERT_THRESHOLD).length;
+  // Stats always from the SELECTED date (updates as teacher navigates dates)
+  const totalStudents  = studentsData.length;
+  const presentToday   = studentsData.filter(s => !!checkIns[`${s.id}_${selectedDate}`]).length;
+  const lateToday      = studentsData.filter(s => { const t = ticks[`${s.id}_${selectedDate}`]; return t && t.isLate; }).length;
+  const onTimeToday    = studentsData.filter(s => { const t = ticks[`${s.id}_${selectedDate}`]; return !!checkIns[`${s.id}_${selectedDate}`] && t && !t.isLate; }).length;
+  const alertCount     = studentsData.filter(s => getLateCount(s.id) >= LATE_ALERT_THRESHOLD).length;
 
   const activePrefix = { '1st Year': 'Y1', '2nd Year': 'Y2', '3rd Year': 'Y3', '4th Year': 'Y4' }[activeYear];
+
+  // ── Dynamic document title ────────────────────────────────────────────────
+  useEffect(() => {
+    document.title = `AttendX — ${activeYear} ${activeClass} · ${selectedDate}`;
+  }, [activeYear, activeClass, selectedDate]);
 
   return (
     <div className="min-h-screen relative z-10 w-full overflow-x-hidden pt-4 main-content-area">
@@ -336,6 +341,7 @@ export default function App() {
               lateToday={lateToday}
               onTimeToday={onTimeToday}
               alertCount={alertCount}
+              dateLabel={selectedDate}
             />
 
             {studentsData.length === 0 ? (

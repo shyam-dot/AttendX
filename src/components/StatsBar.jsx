@@ -21,7 +21,8 @@ function StatCard({ icon, label, value, accent, sublabel }) {
   );
 }
 
-export default function StatsBar({ totalStudents, presentToday, lateToday, onTimeToday, alertCount }) {
+export default function StatsBar({ totalStudents, presentToday, lateToday, onTimeToday, alertCount, dateLabel }) {
+  const dl = dateLabel ? dateLabel.toUpperCase() : 'TODAY';
   return (
     <div className="stats-grid">
       <StatCard 
@@ -33,21 +34,21 @@ export default function StatsBar({ totalStudents, presentToday, lateToday, onTim
       />
       <StatCard 
         icon="✅" 
-        label="Present Today" 
+        label={`Present · ${dl}`}
         value={presentToday} 
         accent="#10b981" 
         sublabel={`${totalStudents - presentToday} Absent`}
       />
       <StatCard 
         icon="⏰" 
-        label="Late Today" 
+        label={`Late · ${dl}`}
         value={lateToday} 
         accent="#fbbf24" 
         sublabel="After 8:30 AM"
       />
       <StatCard 
         icon="🟢" 
-        label="On Time" 
+        label={`On Time · ${dl}`}
         value={onTimeToday} 
         accent="#34d399" 
         sublabel="Before 8:30 AM"
